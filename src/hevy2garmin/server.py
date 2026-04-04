@@ -243,30 +243,11 @@ async def dashboard(request: Request):
         pass
 
     hevy_total = 0
-    matched_count = 0
+    matched_count = synced_count  # Use DB count (fast) instead of Garmin API (slow)
     try:
         from hevy2garmin.hevy import HevyClient
         hevy = HevyClient(api_key=config.get("hevy_api_key"))
         hevy_total = hevy.get_workout_count()
-
-        # Only attempt Garmin API calls if tokens already exist (never trigger fresh SSO login)
-        if garmin_connected and config.get("garmin_email"):
-            from hevy2garmin.matcher import fetch_garmin_activities, count_matched_workouts, _matched_count_cache
-            if _matched_count_cache is not None:
-                matched_count = _matched_count_cache
-            else:
-                try:
-                    from hevy2garmin.garmin import get_client
-                    garmin_client = get_client(config.get("garmin_email"))
-                    garmin_acts = fetch_garmin_activities(garmin_client, count=1000)
-                    garmin_strength = sum(
-                        1 for a in garmin_acts
-                        if a.get("activityType", {}).get("typeKey", "") in ("strength_training", "indoor_cardio")
-                    )
-                    matched_count = min(garmin_strength, hevy_total)
-                except Exception:
-                    pass
-                _trigger_bg_match_count(config, hevy, hevy_total)
     except Exception:
         pass
     mapping_count = 0

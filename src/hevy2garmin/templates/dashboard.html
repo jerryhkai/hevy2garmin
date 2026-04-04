@@ -216,7 +216,7 @@
         {% if sync_log %}
             {% for entry in sync_log[:7] %}
             <div class="sync-log-entry">
-                <span class="sync-log-time" style="font-size: 12px;">{{ entry.time[:16] }}</span>
+                <span class="sync-log-time" style="font-size: 12px;">{{ entry.time.strftime('%Y-%m-%d %H:%M') if entry.time.strftime is defined else entry.time[:16] }}</span>
                 <div class="sync-log-stats">
                     {% if entry.synced > 0 %}
                     <span class="sync-log-stat">
