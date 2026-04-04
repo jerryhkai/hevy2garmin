@@ -28,8 +28,8 @@ def get_client(
     Uses DBTokenStore when DATABASE_URL is set (cloud/Vercel),
     falls back to file-based tokens (local/Docker).
     """
-    import os
-    database_url = os.environ.get("DATABASE_URL")
+    from hevy2garmin.db import get_database_url
+    database_url = get_database_url()
 
     kwargs: dict = {"email": email, "password": password}
     if database_url:

@@ -18,12 +18,30 @@ if TYPE_CHECKING:
 
 _instance: Database | None = None
 
+# Vercel Neon integration sets env vars with a custom prefix (default: STORAGE).
+# Check all common names so users don't have to change the prefix.
+_POSTGRES_URL_VARS = [
+    "DATABASE_URL",
+    "POSTGRES_URL",
+    "STORAGE_URL",
+    "NEON_DATABASE_URL",
+]
+
+
+def get_database_url() -> str | None:
+    """Find a Postgres connection URL from common env var names."""
+    for var in _POSTGRES_URL_VARS:
+        url = os.environ.get(var)
+        if url and ("postgres" in url or "neon" in url):
+            return url
+    return None
+
 
 def get_db() -> Database:
     """Get or create the singleton Database instance."""
     global _instance
     if _instance is None:
-        database_url = os.environ.get("DATABASE_URL")
+        database_url = get_database_url()
         if database_url:
             from hevy2garmin.db_postgres import PostgresDatabase
 
