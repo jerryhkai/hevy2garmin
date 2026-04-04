@@ -83,6 +83,14 @@ class HevyClient:
             page += 1
         return all_workouts
 
+    def get_routines(self, page: int = 1, page_size: int = 10) -> dict:
+        """Get a page of routines."""
+        return self._get("/routines", {"page": page, "pageSize": page_size})
+
+    def get_routine_folders(self, page: int = 1, page_size: int = 10) -> dict:
+        """Get a page of routine folders."""
+        return self._get("/routine_folders", {"page": page, "pageSize": page_size})
+
     def get_exercise_templates(self, page: int = 1, page_size: int = 10) -> dict:
         """Get a page of exercise templates."""
         return self._get("/exercise_templates", {"page": page, "pageSize": page_size})

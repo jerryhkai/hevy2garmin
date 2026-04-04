@@ -39,6 +39,7 @@ from hevy2garmin.mapper import lookup_exercise
 _MIN_SCALE = 0.3
 _MAX_SCALE = 2.0
 _DEFAULT_HR_BPM = 90  # fallback when no HR data at all
+DEFAULT_HR_BPM = _DEFAULT_HR_BPM  # public alias
 
 
 def _get_profile(override: dict | None = None) -> dict:
@@ -66,6 +67,16 @@ def _get_profile(override: dict | None = None) -> dict:
 def _ms(dt: datetime) -> int:
     """Convert a datetime to milliseconds since Unix epoch."""
     return round(dt.timestamp() * 1000)
+
+
+def parse_timestamp(raw: str) -> datetime:
+    """Parse ISO-8601 or Garmin space-separated timestamp to UTC datetime."""
+    return _parse_timestamp(raw)
+
+
+def calc_calories(hr_samples: list[int], duration_s: float, workout_year: int, profile: dict | None = None) -> int:
+    """Calculate total calories from HR samples using the Keytel formula."""
+    return _calc_calories(hr_samples, duration_s, workout_year, profile)
 
 
 def _parse_timestamp(raw: str) -> datetime:
