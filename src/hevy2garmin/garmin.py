@@ -35,6 +35,8 @@ def get_client(
     if database_url:
         from garmin_auth.storage import DBTokenStore
         kwargs["store"] = DBTokenStore(database_url)
+        # Use /tmp for garth token files on read-only filesystems (Vercel)
+        kwargs["token_dir"] = "/tmp/.garminconnect"
     else:
         kwargs["token_dir"] = token_dir
 
