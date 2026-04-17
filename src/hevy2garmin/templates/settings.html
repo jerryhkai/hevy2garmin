@@ -54,15 +54,12 @@
         </div>
         <div class="form-group">
             <label class="form-label" for="hevy_api_key">Hevy API Key</label>
-            <input class="form-input" type="text" id="hevy_api_key" name="hevy_api_key" value="{{ config.get('hevy_api_key', '') }}" placeholder="Your Hevy API key">
-            <div class="form-hint">
-                <a href="https://hevy.com/settings" target="_blank" rel="noopener">hevy.com/settings</a> &rarr; Integrations &amp; API &rarr; Generate API Key
-            </div>
+            <input class="form-input" type="password" id="hevy_api_key" name="hevy_api_key" placeholder="Leave blank to keep current">
         </div>
         <div class="form-grid">
             <div class="form-group">
                 <label class="form-label" for="garmin_email">Garmin Email</label>
-                <input class="form-input" type="email" id="garmin_email" name="garmin_email" value="{{ config.get('garmin_email', '') }}">
+                <input class="form-input" type="password" id="garmin_email" name="garmin_email" placeholder="Leave blank to keep current">
             </div>
             <div class="form-group">
                 <label class="form-label" for="garmin_password">Garmin Password</label>

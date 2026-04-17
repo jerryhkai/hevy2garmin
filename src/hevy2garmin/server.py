@@ -804,6 +804,8 @@ async def settings_save(
         config["hevy_api_key"] = hevy_api_key
     if garmin_email:
         config["garmin_email"] = garmin_email
+    if garmin_password:
+        config["garmin_password"] = garmin_password
     config["user_profile"].update(weight_kg=weight_kg, birth_year=birth_year, sex=sex, vo2max=vo2max)
     config["timing"].update(
         working_set_seconds=working_set_seconds, warmup_set_seconds=warmup_set_seconds,
@@ -1141,7 +1143,10 @@ async def api_toggle_autosync(request: Request):
     form = await request.form()
     enabled_raw = form.get("enabled", "false")
     enabled = enabled_raw in ("true", "True", "1", True)
-    interval = int(form.get("interval", 120))
+    try:
+        interval = int(form.get("interval", 120))
+    except (ValueError, TypeError):
+        interval = 120
     if interval not in (30, 60, 120, 240, 360, 720, 1440):
         interval = 120
 
@@ -1388,7 +1393,10 @@ async def api_setup_actions(request: Request):
     interval = 120
     try:
         form = await request.form()
-        interval = int(form.get("interval", 120))
+        raw_interval = form.get("interval", 120)
+        interval = int(raw_interval)
+    except (ValueError, TypeError):
+        interval = 120
     except Exception:
         pass
     ok, msg = await _setup_github_actions(interval_minutes=interval)
@@ -1473,8 +1481,34 @@ async def _do_sync_one(request: Request):
     # Sync this one workout
     try:
         from hevy2garmin.garmin import find_activity_by_start_time
+        from hevy2garmin.merge import attempt_merge
         garmin_client = get_client(config.get("garmin_email"))
         workout_start = unsynced.get("start_time")
+        merge_mode = config.get("merge_mode", True)
+        sync_method = "upload"
+
+        # Merge mode: try to enhance a watch-recorded activity with Hevy data
+        if merge_mode:
+            merge_result = attempt_merge(garmin_client, unsynced, db.get_db())
+            if merge_result.merged:
+                aid = merge_result.activity_id
+                result = {"calories": 0, "avg_hr": None}
+                # Generate FIT just for calorie estimate
+                with tempfile.TemporaryDirectory() as tmp:
+                    fit_path = f"{tmp}/{unsynced['id']}.fit"
+                    result = generate_fit(unsynced, hr_samples=None, output_path=fit_path)
+                sync_method = "merge"
+                db.mark_synced(
+                    hevy_id=unsynced["id"],
+                    garmin_activity_id=str(aid),
+                    title=unsynced["title"],
+                    calories=result.get("calories"),
+                    avg_hr=result.get("avg_hr"),
+                    hevy_updated_at=unsynced.get("updated_at"),
+                    sync_method=sync_method,
+                )
+                remaining = hevy.get_workout_count() - db.get_synced_count()
+                return JSONResponse({"synced": 1, "title": unsynced["title"], "remaining": max(0, remaining), "done": remaining <= 0})
 
         # Dedup: check if this workout already exists on Garmin before uploading.
         # Prevents duplicates when a prior sync uploaded successfully but crashed
@@ -1493,6 +1527,7 @@ async def _do_sync_one(request: Request):
             rename_activity(garmin_client, aid, unsynced["title"])
             desc = generate_description(unsynced, calories=result.get("calories"), avg_hr=result.get("avg_hr"))
             set_description(garmin_client, aid, desc)
+            sync_method = "upload_fallback"
         else:
             with tempfile.TemporaryDirectory() as tmp:
                 fit_path = f"{tmp}/{unsynced['id']}.fit"
@@ -1511,6 +1546,7 @@ async def _do_sync_one(request: Request):
             calories=result.get("calories"),
             avg_hr=result.get("avg_hr"),
             hevy_updated_at=unsynced.get("updated_at"),
+            sync_method=sync_method,
         )
 
         remaining = hevy.get_workout_count() - db.get_synced_count()

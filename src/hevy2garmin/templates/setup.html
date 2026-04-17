@@ -51,7 +51,7 @@
             <div class="form-group">
                 <label class="form-label" for="hevy_api_key">API Key</label>
                 <div style="display: flex; gap: 8px;">
-                    <input class="form-input" type="text" id="hevy_api_key" name="hevy_api_key" placeholder="Paste your Hevy API key" value="{{ config.get('hevy_api_key', '') }}" required autocomplete="off" style="flex: 1;">
+                    <input class="form-input" type="password" id="hevy_api_key" name="hevy_api_key" placeholder="{{ '••••••••' ~ config.get('hevy_api_key', '')[-4:] if config.get('hevy_api_key') else 'Paste your Hevy API key' }}" {{ '' if config.get('hevy_api_key') else 'required' }} autocomplete="off" style="flex: 1;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="validateHevyKey()" style="white-space: nowrap;">Test Key</button>
                 </div>
                 <div id="hevy-validate-result" style="margin-top: 4px;"></div>
@@ -70,7 +70,7 @@
             <div class="card-title" style="margin-bottom: 16px;">2. Garmin Connect</div>
             <div class="form-group">
                 <label class="form-label" for="garmin_email">Email</label>
-                <input class="form-input" type="email" id="garmin_email" name="garmin_email" placeholder="your@email.com" value="{{ config.get('garmin_email', '') }}" autocomplete="email">
+                <input class="form-input" type="password" id="garmin_email" name="garmin_email" placeholder="{{ '••••••••' ~ config.get('garmin_email', '')[-4:] if config.get('garmin_email') else 'your@email.com' }}" autocomplete="email">
             </div>
             <div class="form-group">
                 <label class="form-label" for="garmin_password">Password</label>
